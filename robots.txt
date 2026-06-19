@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://YOUR-USERNAME.github.io/grocery-compare/sitemap.xml
+Sitemap: https://tshi256-creator.github.io/grocery-compare/sitemap.xml
