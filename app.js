@@ -500,22 +500,22 @@ function closeSettings() {
 /* ------------------------------ init ---------------------------- */
 
 document.addEventListener("DOMContentLoaded", async () => {
-  loadStoreFilter();
-  renderChips();
-  updateQuotaUI();
-  renderComparisonTable({}); // immediate header render, before data/results exist
-  renderFilterPanel();
-  await loadDataFiles();
-  populateHistorySelect();
-  await runCompare();
-
+  // 1) Wire up every button/listener FIRST, synchronously, before any
+  // network call or chart rendering. That way, if something async below
+  // throws (a CDN script failing to load, a bad data file, etc.), the
+  // buttons on the page still work instead of the whole init silently
+  // dying partway through.
   document.getElementById("addItemsBtn").addEventListener("click", addItemsFromInput);
   document.getElementById("listInput").addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); addItemsFromInput(); }
   });
   document.getElementById("clearListBtn").addEventListener("click", () => { groceryList = []; renderChips(); });
-  document.getElementById("runCompareBtn").addEventListener("click", runCompare);
-  document.getElementById("historyItemSelect").addEventListener("change", (e) => renderHistoryChart(e.target.value));
+  document.getElementById("runCompareBtn").addEventListener("click", () => {
+    runCompare().catch((err) => console.error("runCompare failed:", err));
+  });
+  document.getElementById("historyItemSelect").addEventListener("change", (e) => {
+    try { renderHistoryChart(e.target.value); } catch (err) { console.error("renderHistoryChart failed:", err); }
+  });
 
   document.getElementById("filterStoresBtn").addEventListener("click", () => {
     const panel = document.getElementById("filterStoresPanel");
@@ -558,4 +558,35 @@ document.addEventListener("DOMContentLoaded", async () => {
     status.classList.remove("hidden");
     setTimeout(() => status.classList.add("hidden"), 4000);
   });
+
+  // 2) Now do the data-dependent setup. Each piece is isolated in its own
+  // try/catch so a failure in one (e.g. the chart) can't take down another
+  // (e.g. the comparison table).
+  try {
+    loadStoreFilter();
+    renderChips();
+    updateQuotaUI();
+    renderComparisonTable({}); // immediate header render, before data/results exist
+    renderFilterPanel();
+  } catch (err) {
+    console.error("Initial render failed:", err);
+  }
+
+  try {
+    await loadDataFiles();
+  } catch (err) {
+    console.error("loadDataFiles failed:", err);
+  }
+
+  try {
+    populateHistorySelect();
+  } catch (err) {
+    console.error("populateHistorySelect / chart render failed (often a Chart.js CDN load issue):", err);
+  }
+
+  try {
+    await runCompare();
+  } catch (err) {
+    console.error("runCompare failed:", err);
+  }
 });
