@@ -1,0 +1,350 @@
+{
+  "_disclaimer": "MOCK / DEMO DATA ONLY. Not real, live, or historical retail prices. Used as a fallback when no SerpApi key is configured or the free monthly quota has been reached.",
+  "generated_for_demo": true,
+  "items": {
+    "Tomatoes": {
+      "unit": "lb",
+      "stores": {
+        "Costco": {
+          "price": 1.81,
+          "on_sale": false
+        },
+        "Safeway": {
+          "price": 2.95,
+          "on_sale": false
+        },
+        "QFC": {
+          "price": 2.42,
+          "on_sale": false
+        },
+        "Trader Joe's": null,
+        "Fred Meyer": {
+          "price": 2.49,
+          "on_sale": true,
+          "old_price": 2.83
+        },
+        "PCC Community Markets": {
+          "price": 3.32,
+          "on_sale": false
+        },
+        "Whole Foods": {
+          "price": 3.42,
+          "on_sale": true,
+          "old_price": 4.26
+        },
+        "Amazon Fresh": {
+          "price": 2.54,
+          "on_sale": true,
+          "old_price": 3.23
+        },
+        "Walmart": {
+          "price": 1.75,
+          "on_sale": true,
+          "old_price": 2.19
+        },
+        "Metropolitan Market": {
+          "price": 3.64,
+          "on_sale": false
+        }
+      }
+    },
+    "Eggs": {
+      "unit": "doz",
+      "stores": {
+        "Costco": {
+          "price": 3.92,
+          "on_sale": false
+        },
+        "Safeway": {
+          "price": 5.18,
+          "on_sale": false
+        },
+        "QFC": {
+          "price": 4.72,
+          "on_sale": false
+        },
+        "Trader Joe's": null,
+        "Fred Meyer": {
+          "price": 4.07,
+          "on_sale": true,
+          "old_price": 4.65
+        },
+        "PCC Community Markets": {
+          "price": 5.36,
+          "on_sale": false
+        },
+        "Whole Foods": {
+          "price": 5.32,
+          "on_sale": true,
+          "old_price": 6.11
+        },
+        "Amazon Fresh": {
+          "price": 4.71,
+          "on_sale": false
+        },
+        "Walmart": {
+          "price": 3.53,
+          "on_sale": true,
+          "old_price": 4.12
+        },
+        "Metropolitan Market": {
+          "price": 6.03,
+          "on_sale": false
+        }
+      }
+    },
+    "Milk": {
+      "unit": "gal",
+      "stores": {
+        "Costco": {
+          "price": 3.54,
+          "on_sale": false
+        },
+        "Safeway": {
+          "price": 3.97,
+          "on_sale": false
+        },
+        "QFC": {
+          "price": 4.01,
+          "on_sale": false
+        },
+        "Trader Joe's": {
+          "price": 3.43,
+          "on_sale": false
+        },
+        "Fred Meyer": {
+          "price": 4.39,
+          "on_sale": false
+        },
+        "PCC Community Markets": {
+          "price": 4.95,
+          "on_sale": false
+        },
+        "Whole Foods": {
+          "price": 5.21,
+          "on_sale": false
+        },
+        "Amazon Fresh": {
+          "price": 3.94,
+          "on_sale": false
+        },
+        "Walmart": {
+          "price": 2.81,
+          "on_sale": true,
+          "old_price": 3.15
+        },
+        "Metropolitan Market": {
+          "price": 5.81,
+          "on_sale": false
+        }
+      }
+    },
+    "Bread": {
+      "unit": "loaf",
+      "stores": {
+        "Costco": null,
+        "Safeway": null,
+        "QFC": {
+          "price": 4.58,
+          "on_sale": false
+        },
+        "Trader Joe's": {
+          "price": 3.71,
+          "on_sale": true,
+          "old_price": 4.56
+        },
+        "Fred Meyer": {
+          "price": 3.82,
+          "on_sale": false
+        },
+        "PCC Community Markets": {
+          "price": 4.54,
+          "on_sale": false
+        },
+        "Whole Foods": {
+          "price": 5.38,
+          "on_sale": false
+        },
+        "Amazon Fresh": {
+          "price": 4.02,
+          "on_sale": true,
+          "old_price": 5.08
+        },
+        "Walmart": {
+          "price": 2.81,
+          "on_sale": false
+        },
+        "Metropolitan Market": {
+          "price": 4.72,
+          "on_sale": false
+        }
+      }
+    },
+    "Bananas": {
+      "unit": "lb",
+      "stores": {
+        "Costco": {
+          "price": 0.6,
+          "on_sale": false
+        },
+        "Safeway": null,
+        "QFC": {
+          "price": 0.66,
+          "on_sale": false
+        },
+        "Trader Joe's": {
+          "price": 0.67,
+          "on_sale": false
+        },
+        "Fred Meyer": null,
+        "PCC Community Markets": {
+          "price": 1.01,
+          "on_sale": true,
+          "old_price": 1.2
+        },
+        "Whole Foods": null,
+        "Amazon Fresh": {
+          "price": 0.78,
+          "on_sale": true,
+          "old_price": 0.92
+        },
+        "Walmart": {
+          "price": 0.51,
+          "on_sale": false
+        },
+        "Metropolitan Market": {
+          "price": 0.87,
+          "on_sale": false
+        }
+      }
+    },
+    "Chicken Breast": {
+      "unit": "lb",
+      "stores": {
+        "Costco": {
+          "price": 3.42,
+          "on_sale": false
+        },
+        "Safeway": {
+          "price": 5.21,
+          "on_sale": false
+        },
+        "QFC": {
+          "price": 4.41,
+          "on_sale": false
+        },
+        "Trader Joe's": {
+          "price": 4.13,
+          "on_sale": false
+        },
+        "Fred Meyer": {
+          "price": 4.03,
+          "on_sale": false
+        },
+        "PCC Community Markets": {
+          "price": 6.5,
+          "on_sale": false
+        },
+        "Whole Foods": null,
+        "Amazon Fresh": {
+          "price": 4.95,
+          "on_sale": true,
+          "old_price": 5.56
+        },
+        "Walmart": {
+          "price": 3.56,
+          "on_sale": false
+        },
+        "Metropolitan Market": {
+          "price": 6.56,
+          "on_sale": true,
+          "old_price": 7.33
+        }
+      }
+    },
+    "Bell Peppers": {
+      "unit": "lb",
+      "stores": {
+        "Costco": {
+          "price": 1.76,
+          "on_sale": false
+        },
+        "Safeway": {
+          "price": 2.55,
+          "on_sale": false
+        },
+        "QFC": {
+          "price": 2.31,
+          "on_sale": false
+        },
+        "Trader Joe's": null,
+        "Fred Meyer": {
+          "price": 2.06,
+          "on_sale": true,
+          "old_price": 2.43
+        },
+        "PCC Community Markets": {
+          "price": 2.74,
+          "on_sale": false
+        },
+        "Whole Foods": {
+          "price": 2.76,
+          "on_sale": false
+        },
+        "Amazon Fresh": {
+          "price": 2.07,
+          "on_sale": false
+        },
+        "Walmart": {
+          "price": 1.9,
+          "on_sale": false
+        },
+        "Metropolitan Market": {
+          "price": 2.74,
+          "on_sale": false
+        }
+      }
+    },
+    "Greek Yogurt": {
+      "unit": "32oz",
+      "stores": {
+        "Costco": null,
+        "Safeway": {
+          "price": 6.0,
+          "on_sale": true,
+          "old_price": 7.01
+        },
+        "QFC": {
+          "price": 5.6,
+          "on_sale": false
+        },
+        "Trader Joe's": {
+          "price": 4.85,
+          "on_sale": false
+        },
+        "Fred Meyer": {
+          "price": 5.56,
+          "on_sale": false
+        },
+        "PCC Community Markets": {
+          "price": 6.89,
+          "on_sale": false
+        },
+        "Whole Foods": {
+          "price": 7.1,
+          "on_sale": false
+        },
+        "Amazon Fresh": null,
+        "Walmart": {
+          "price": 4.29,
+          "on_sale": false
+        },
+        "Metropolitan Market": {
+          "price": 8.29,
+          "on_sale": true,
+          "old_price": 9.4
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tally — Pacific NW Grocery Price Check</title>
+<meta name="description" content="Build one grocery list and compare today's prices across ten Pacific Northwest supermarkets — Costco, Safeway, QFC, Trader Joe's, Fred Meyer, PCC, Whole Foods, Amazon Fresh, Walmart, and Metropolitan Market." />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧾</text></svg>" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders:wght@500;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          paper:    '#FAF6EC',
+          paper2:   '#F1EAD9',
+          ink:      '#2B2620',
+          evergreen:'#1F3D2B',
+          evergreen2:'#163021',
+          tomato:   '#C8462F',
+          tomato2:  '#A8381F',
+          butter:   '#F0BF4C',
+          sage:     '#8FA888',
+        },
+        fontFamily: {
+          display: ['"Big Shoulders"', 'sans-serif'],
+          body: ['Inter', 'sans-serif'],
+          mono: ['"IBM Plex Mono"', 'monospace'],
+        }
+      }
+    }
+  }
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+
+<style>
+  body { background-color: #FAF6EC; }
+
+  /* subtle paper grain */
+  .grain {
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(43,38,32,0.05) 1px, transparent 0);
+    background-size: 14px 14px;
+  }
+
+  /* receipt edge: perforated top/bottom */
+  .receipt-edge {
+    background-image: radial-gradient(circle, #FAF6EC 5px, transparent 6px);
+    background-size: 16px 12px;
+    background-position: 0 -6px;
+    height: 12px;
+  }
+  .receipt-edge.bottom { transform: rotate(180deg); }
+
+  .stamp {
+    transform: rotate(-6deg);
+    border: 3px solid currentColor;
+    border-radius: 6px;
+    box-shadow: 0 0 0 1px currentColor inset;
+  }
+
+  .price-tag {
+    position: relative;
+  }
+  .price-tag.best::before {
+    content: "BEST";
+    position: absolute;
+    top: -9px;
+    left: 50%;
+    transform: translateX(-50%) rotate(-3deg);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    background: #F0BF4C;
+    color: #2B2620;
+    padding: 1px 6px;
+    border-radius: 3px;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.15);
+  }
+
+  .scrollbar-thin::-webkit-scrollbar { height: 10px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: #F1EAD9; border-radius: 8px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background: #C9BDA0; border-radius: 8px; }
+
+  .chip-in { animation: chipIn .18s ease-out; }
+  @keyframes chipIn { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: scale(1); } }
+
+  ::selection { background: #F0BF4C; color: #2B2620; }
+
+  :focus-visible { outline: 2px solid #C8462F; outline-offset: 2px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+</style>
+</head>
+<body class="font-body text-ink antialiased">
+
+<!-- ============ HEADER ============ -->
+<header class="sticky top-0 z-40 bg-paper/95 backdrop-blur border-b border-ink/10">
+  <div class="max-w-6xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-2">
+      <span class="font-display font-extrabold text-2xl tracking-tight text-evergreen">TALLY</span>
+      <span class="hidden sm:inline font-mono text-[11px] text-ink/50 tracking-wide">PNW GROCERY PRICE CHECK</span>
+    </a>
+    <nav class="flex items-center gap-4 sm:gap-6 font-mono text-[12px] tracking-wide">
+      <a href="#list" class="hidden sm:inline hover:text-tomato transition">YOUR LIST</a>
+      <a href="#compare" class="hidden sm:inline hover:text-tomato transition">COMPARE</a>
+      <a href="#support" class="hidden sm:inline hover:text-tomato transition">SUPPORT</a>
+      <button id="settingsBtn" aria-label="Open settings" class="flex items-center gap-1.5 border border-ink/20 hover:border-evergreen hover:text-evergreen rounded-full px-3 py-1.5 transition">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span class="hidden sm:inline">SETTINGS</span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<!-- ============ HERO ============ -->
+<section id="top" class="grain border-b border-ink/10">
+  <div class="max-w-6xl mx-auto px-5 sm:px-8 py-14 sm:py-20 grid lg:grid-cols-[1.2fr_0.8fr] gap-12 items-center">
+    <div>
+      <p class="font-mono text-[12px] tracking-[0.12em] text-tomato mb-4">PACIFIC NORTHWEST &middot; 10 LOCAL STORES &middot; ONE LIST</p>
+      <h1 class="font-display font-extrabold text-[42px] sm:text-[58px] leading-[1.02] text-evergreen tracking-tight">
+        Stop guessing<br/>which store is<br/>cheaper this week.
+      </h1>
+      <p class="mt-5 text-[17px] text-ink/70 max-w-md leading-relaxed">
+        Type your grocery list once. Tally checks today's prices across ten Seattle-area
+        supermarkets and tells you exactly where the whole cart costs least &mdash; no ads,
+        no thirty browser tabs.
+      </p>
+      <div class="mt-7 flex flex-wrap items-center gap-4">
+        <a href="#list" class="inline-flex items-center gap-2 bg-evergreen hover:bg-evergreen2 text-paper font-semibold px-6 py-3 rounded-lg transition shadow-sm">
+          Build my list
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </a>
+        <span class="font-mono text-[12px] text-ink/45">Free &middot; runs in your browser &middot; no account needed</span>
+      </div>
+    </div>
+
+    <!-- signature element: receipt mockup -->
+    <div class="relative mx-auto w-full max-w-[280px]">
+      <div class="receipt-edge"></div>
+      <div class="bg-white shadow-[0_18px_40px_-12px_rgba(31,61,43,0.35)] px-6 py-6 -mt-px">
+        <p class="font-mono text-[11px] text-center text-ink/50 tracking-wide">TALLY &middot; PRICE CHECK</p>
+        <p class="font-mono text-[10px] text-center text-ink/35 mb-4">SEATTLE, WA &middot; JUN 19 2026</p>
+        <div class="font-mono text-[12px] space-y-1.5 text-ink/80">
+          <div class="flex justify-between"><span>TOMATOES 1LB</span><span>$1.81</span></div>
+          <div class="flex justify-between"><span>EGGS DOZEN</span><span>$3.52</span></div>
+          <div class="flex justify-between"><span>MILK 1GAL</span><span>$2.94</span></div>
+          <div class="flex justify-between"><span>BREAD LOAF</span><span>$3.01</span></div>
+        </div>
+        <div class="border-t border-dashed border-ink/25 my-3"></div>
+        <div class="flex justify-between font-mono text-[13px] font-semibold"><span>TOTAL</span><span>$11.28</span></div>
+        <div class="mt-4 flex justify-center">
+          <span class="stamp text-tomato font-mono text-[11px] font-semibold px-3 py-1 tracking-wide">CHEAPEST: WALMART</span>
+        </div>
+      </div>
+      <div class="receipt-edge bottom"></div>
+      <p class="text-center font-mono text-[10px] text-ink/40 mt-2">Illustrative example &mdash; not live data</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ GROCERY LIST INPUT ============ -->
+<section id="list" class="border-b border-ink/10 bg-paper2">
+  <div class="max-w-6xl mx-auto px-5 sm:px-8 py-14">
+    <div class="flex items-baseline justify-between gap-4 flex-wrap mb-6">
+      <h2 class="font-display font-bold text-3xl text-evergreen">Your grocery list</h2>
+      <p class="font-mono text-[12px] text-ink/50">Comma or new line between items</p>
+    </div>
+
+    <div class="grid sm:grid-cols-[1fr_auto] gap-3 mb-4">
+      <textarea id="listInput" rows="2" placeholder="e.g. Tomatoes, Eggs, Milk, Bread, Bananas"
+        class="w-full resize-none bg-white border border-ink/15 rounded-lg px-4 py-3 text-[15px] focus:border-evergreen outline-none placeholder:text-ink/35"></textarea>
+      <button id="addItemsBtn" class="bg-tomato hover:bg-tomato2 text-paper font-semibold rounded-lg px-6 py-3 transition self-start">Add to list</button>
+    </div>
+
+    <div id="chipContainer" class="flex flex-wrap gap-2 min-h-[2.5rem]"></div>
+
+    <div class="mt-6 flex items-center gap-3 flex-wrap">
+      <button id="runCompareBtn" class="inline-flex items-center gap-2 bg-evergreen hover:bg-evergreen2 text-paper font-semibold px-6 py-3 rounded-lg transition">
+        Compare prices
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      </button>
+      <button id="clearListBtn" class="font-mono text-[12px] text-ink/50 hover:text-tomato underline">clear list</button>
+      <span id="quotaPill" class="font-mono text-[11px] text-ink/55 border border-ink/15 rounded-full px-3 py-1"></span>
+    </div>
+
+    <div id="quotaBanner" class="hidden mt-4 bg-butter/40 border border-butter text-ink/80 text-[13px] rounded-lg px-4 py-3"></div>
+    <div id="dataSourceNote" class="mt-3 font-mono text-[11px] text-ink/45"></div>
+  </div>
+</section>
+
+<!-- ============ SETTINGS PANEL (hidden modal) ============ -->
+<div id="settingsModal" class="hidden fixed inset-0 z-50 bg-ink/40 backdrop-blur-sm items-center justify-center p-4">
+  <div class="bg-paper max-w-md w-full rounded-xl shadow-2xl border border-ink/10 p-6">
+    <div class="flex items-center justify-between mb-1">
+      <h3 class="font-display font-bold text-xl text-evergreen">Settings</h3>
+      <button id="closeSettingsBtn" aria-label="Close settings" class="text-ink/40 hover:text-ink">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <p class="text-[13px] text-ink/60 mb-5">Your SerpApi key is saved only in this browser's local storage. It is never sent anywhere except directly to SerpApi, and it is never committed to GitHub.</p>
+
+    <label class="block font-mono text-[11px] text-ink/55 mb-1">SERPAPI KEY (OPTIONAL)</label>
+    <input id="apiKeyInput" type="password" placeholder="Paste your SerpApi key"
+      class="w-full bg-white border border-ink/15 rounded-lg px-3 py-2.5 text-[14px] focus:border-evergreen outline-none mb-3" />
+    <div class="flex gap-2 mb-5">
+      <button id="saveKeyBtn" class="flex-1 bg-evergreen hover:bg-evergreen2 text-paper text-[13px] font-semibold rounded-lg py-2.5">Save key</button>
+      <button id="forgetKeyBtn" class="flex-1 border border-ink/20 hover:border-tomato hover:text-tomato text-[13px] font-semibold rounded-lg py-2.5">Forget key</button>
+    </div>
+
+    <div class="bg-paper2 rounded-lg p-4 mb-2">
+      <div class="flex justify-between font-mono text-[12px] text-ink/70 mb-1">
+        <span>Monthly SerpApi usage</span>
+        <span id="usageCountText">0 / 95</span>
+      </div>
+      <div class="h-2 rounded-full bg-ink/10 overflow-hidden">
+        <div id="usageBar" class="h-full bg-evergreen transition-all" style="width:0%"></div>
+      </div>
+      <p class="text-[11px] text-ink/45 mt-2">Resets automatically each calendar month. Capped at 95 of the 100 free monthly searches as a safety margin.</p>
+    </div>
+    <button id="resetUsageBtn" class="font-mono text-[11px] text-ink/45 hover:text-tomato underline">reset counter manually</button>
+
+    <p class="text-[11px] text-ink/40 mt-5 leading-relaxed">Note: most browsers block direct cross-origin requests to SerpApi from a static site (CORS). If a live request fails, Tally automatically falls back to demo data below — see the README for a small proxy setup if you want reliable live results.</p>
+  </div>
+</div>
+
+<!-- ============ COMPARISON TABLE ============ -->
+<section id="compare" class="border-b border-ink/10">
+  <div class="max-w-6xl mx-auto px-5 sm:px-8 py-14">
+    <div class="flex items-baseline justify-between gap-4 flex-wrap mb-2">
+      <h2 class="font-display font-bold text-3xl text-evergreen">Price comparison</h2>
+      <p id="lastCheckedNote" class="font-mono text-[12px] text-ink/50"></p>
+    </div>
+    <p class="text-ink/60 text-[14px] mb-4 max-w-2xl">Today's price at each store, side by side. Items a store doesn't carry are marked
+      <span class="font-mono text-[12px] bg-ink/5 px-1.5 py-0.5 rounded">N/A</span> rather than left blank or guessed at.</p>
+
+    <div class="mb-5">
+      <button id="filterStoresBtn" aria-expanded="false" class="inline-flex items-center gap-2 border border-ink/20 hover:border-evergreen hover:text-evergreen rounded-full px-4 py-2 font-mono text-[12px] tracking-wide transition">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
+        FILTER STORES
+      </button>
+
+      <div id="filterStoresPanel" class="hidden mt-3 bg-white border border-ink/10 rounded-xl p-4 sm:p-5 max-w-2xl">
+        <p class="text-ink/60 text-[12px] mb-3 leading-relaxed">Note: local niche stores like PCC or Metropolitan Market may have limited real-time data on Google Shopping. Check to enable them manually.</p>
+        <div id="filterStoresChecklist" class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <!-- checkboxes injected by JS -->
+        </div>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto scrollbar-thin border border-ink/10 rounded-xl">
+      <table class="min-w-[1100px] w-full text-[13px]">
+        <thead>
+          <tr id="compareTableHead" class="bg-evergreen text-paper">
+            <th class="text-left font-mono font-medium px-4 py-3 sticky left-0 bg-evergreen z-10">ITEM</th>
+            <!-- store headers injected by JS -->
+          </tr>
+        </thead>
+        <tbody id="compareTableBody" class="font-mono divide-y divide-ink/8">
+          <!-- rows injected by JS -->
+        </tbody>
+        <tfoot id="compareTableFoot" class="font-mono">
+          <!-- total row injected by JS -->
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ HISTORY CHART ============ -->
+<section id="history" class="border-b border-ink/10 bg-paper2">
+  <div class="max-w-6xl mx-auto px-5 sm:px-8 py-14">
+    <div class="flex items-baseline justify-between gap-4 flex-wrap mb-2">
+      <h2 class="font-display font-bold text-3xl text-evergreen">Monthly price history</h2>
+      <select id="historyItemSelect" class="font-mono text-[12px] border border-ink/20 rounded-lg px-3 py-2 bg-white"></select>
+    </div>
+    <p class="text-ink/60 text-[14px] mb-6 max-w-2xl">Tracked automatically once a month by a scheduled GitHub Action and appended to <code class="font-mono text-[12px] bg-ink/5 px-1 rounded">history-price.json</code>. Until that's run a few times on your fork, this chart shows seeded demo data.</p>
+    <div id="historyLoadError" class="hidden mb-4 bg-tomato/10 border border-tomato/30 text-tomato text-[13px] rounded-lg px-4 py-3"></div>
+    <div class="bg-white border border-ink/10 rounded-xl p-4 sm:p-6">
+      <canvas id="historyChart" height="110"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- ============ NATIVE SLOT 1: TideHarvest ============ -->
+<section class="border-b border-ink/10">
+  <div class="max-w-6xl mx-auto px-5 sm:px-8 py-12">
+    <a href="https://tshi256-creator.github.io/" target="_blank" rel="noopener"
+       class="group flex flex-col sm:flex-row items-stretch gap-6 bg-[#0F2A3B] text-paper rounded-2xl overflow-hidden p-7 sm:p-8 hover:shadow-xl transition">
+      <div class="flex-1">
+        <p class="font-mono text-[11px] tracking-[0.12em] text-[#8FD3C7] mb-2">FROM THE SAME BUILDER</p>
+        <h3 class="font-display font-bold text-2xl sm:text-3xl leading-tight mb-2">TideHarvest &mdash; Your Ultimate Clamming &amp; Tide Alert Tool</h3>
+        <p class="text-paper/75 text-[14px] max-w-lg leading-relaxed">A focused micro-SaaS for tracking real-time tide tables and harvesting alerts at Washington state beaches &mdash; Bainbridge Island, Wolfe Property, and more. Built for the same kind of "stop checking ten tabs" problem as Tally.</p>
+        <span class="inline-flex items-center gap-1.5 mt-4 font-semibold text-[14px] text-[#8FD3C7] group-hover:underline">
+          Visit TideHarvest
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M7 7h10v10"/></svg>
+        </span>
+      </div>
+      <div class="hidden sm:flex items-center justify-center w-40 shrink-0 text-5xl">🌊🦪</div>
+    </a>
+  </div>
+</section>
+
+<!-- ============ NATIVE SLOT 2: Intraday Stock Signal System ============ -->
+<section class="border-b border-ink/10 bg-paper2">
+  <div class="max-w-6xl mx-auto px-5 sm:px-8 py-12">
+    <div class="flex flex-col sm:flex-row gap-6 bg-white border border-ink/10 rounded-2xl p-7 sm:p-8">
+      <div class="flex-1">
+        <div class="flex items-center gap-2 mb-2">
+          <p class="font-mono text-[11px] tracking-[0.12em] text-ink/45">FROM THE SAME BUILDER</p>
+          <span class="font-mono text-[10px] font-semibold bg-[#1F7A4D] text-paper px-2 py-0.5 rounded-full">FREE NOW</span>
+        </div>
+        <h3 class="font-display font-bold text-2xl text-evergreen leading-tight mb-1">Intraday Stock Signal System</h3>
+        <p class="text-ink/65 text-[14px] max-w-lg leading-relaxed mb-3">5-minute level short-term trading alerts developed in-house. Currently covering 3 high-volatility tickers. Free to try during beta.</p>
+        <div class="flex gap-2 mb-4">
+          <span class="font-mono text-[12px] font-semibold bg-ink/5 border border-ink/15 rounded-full px-3 py-1">NVDA</span>
+          <span class="font-mono text-[12px] font-semibold bg-ink/5 border border-ink/15 rounded-full px-3 py-1">TSLA</span>
+          <span class="font-mono text-[12px] font-semibold bg-ink/5 border border-ink/15 rounded-full px-3 py-1">PLTR</span>
+        </div>
+        <span class="inline-flex items-center gap-1.5 font-semibold text-[14px] text-ink/40 cursor-default">
+          Details Coming Soon →
+        </span>
+        <p class="text-[11px] text-ink/40 mt-4 max-w-lg leading-relaxed">⚠️ Not investment advice. Past signal performance does not guarantee future results. Trade at your own risk. This system is based solely on technical indicators and fixed quantitative algorithm models. The publisher does not handle user funds and does not provide one-on-one consulting.</p>
+      </div>
+      <div class="sm:w-56 shrink-0 flex items-center justify-center">
+        <div class="w-full h-32 border-2 border-dashed border-ink/20 rounded-xl flex items-center justify-center text-center text-ink/40 text-[13px] px-3">
+          📊 Signal dashboard preview coming soon
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FEEDBACK ============ -->
+<!--
+  Placeholder UI only — not wired to any backend yet (per request, this is
+  intentional for now). On submit, app.js just shows a confirmation message
+  and clears the form; nothing is sent or stored anywhere. Before a real
+  launch, point #feedbackForm at a destination — a mailto: link, a hosted
+  form service, or a backend endpoint — and remove this comment.
+-->
+<section id="feedback" class="border-b border-ink/10">
+  <div class="max-w-6xl mx-auto px-5 sm:px-8 py-14">
+    <div class="max-w-xl mx-auto">
+      <div class="text-center mb-6">
+        <h2 class="font-display font-bold text-3xl text-evergreen">Leave Us a Note</h2>
+        <p class="text-ink/60 text-[14px] mt-1">Tell us what's working, what's missing, or which store we should add next.</p>
+      </div>
+
+      <form id="feedbackForm" class="bg-white border border-ink/10 rounded-2xl p-6 sm:p-7 shadow-sm">
+        <div class="grid sm:grid-cols-2 gap-3 mb-3">
+          <input id="feedbackName" type="text" placeholder="Your name (optional)"
+            class="bg-paper2 border border-ink/15 rounded-lg px-3 py-2.5 text-[14px] focus:border-evergreen outline-none" />
+          <input id="feedbackEmail" type="email" placeholder="Email (optional, for a reply)"
+            class="bg-paper2 border border-ink/15 rounded-lg px-3 py-2.5 text-[14px] focus:border-evergreen outline-none" />
+        </div>
+        <textarea id="feedbackMessage" rows="4" required placeholder="Share your thoughts..."
+          class="w-full resize-none bg-paper2 border border-ink/15 rounded-lg px-3 py-2.5 text-[14px] focus:border-evergreen outline-none placeholder:text-ink/35 mb-3"></textarea>
+        <div class="flex items-center justify-between gap-4 flex-wrap">
+          <button type="submit" class="bg-tomato hover:bg-tomato2 text-paper font-semibold rounded-lg px-6 py-2.5 transition">Send feedback</button>
+          <p id="feedbackStatus" class="font-mono text-[12px] text-evergreen hidden">Thanks — we read every note.</p>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SUPPORT / DONATION ============ -->
+<section id="support" class="border-b border-ink/10 bg-evergreen text-paper">
+  <div class="max-w-6xl mx-auto px-5 sm:px-8 py-14 grid sm:grid-cols-[1.3fr_0.7fr] gap-8 items-center">
+    <div>
+      <h2 class="font-display font-bold text-3xl mb-3">Support This Project</h2>
+      <p class="text-paper/75 text-[15px] max-w-lg leading-relaxed">If you find this tool helpful and want to help keep it running, please consider making a small donation. Your support directly goes toward covering our monthly API data usage limits and maintenance costs, helping us keep this service completely free and up-to-date for the community!</p>
+    </div>
+    <div class="flex sm:justify-end">
+      <a href="#" target="_blank" rel="noopener"
+         class="inline-flex items-center gap-2 bg-[#FFC439] hover:bg-[#f0b429] text-[#003087] font-bold text-[15px] px-7 py-3.5 rounded-full shadow-lg transition">
+        💳 Support via PayPal
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="bg-paper2">
+  <div class="max-w-6xl mx-auto px-5 sm:px-8 py-10 flex flex-col sm:flex-row justify-between gap-4 text-ink/50 font-mono text-[12px]">
+    <p>TALLY &middot; an independent project, not affiliated with any supermarket listed above.</p>
+    <p>Prices shown are demo data unless you've configured a SerpApi key. Always verify in-store.</p>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
